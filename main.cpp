@@ -1,4 +1,5 @@
 #include "Airmar200WXHController.h"
+#include <QDebug>
 
 using namespace Airmar200WXH;
 
@@ -13,6 +14,10 @@ int	main()
         {
             ctrl.readDataLoop();
         }
+    }
+    else
+    {
+        qDebug() << "RetCode = " << ret.toInt();
     }
 	return 0;
 }

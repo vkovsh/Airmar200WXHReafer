@@ -7,6 +7,7 @@ namespace Airmar200WXH
 {
     class Airmar200WXHController
     {
+    public:
         class Timer
         {
         private:
@@ -49,11 +50,153 @@ namespace Airmar200WXH
                 West = 2,
             };
 
+            enum eGPSfixType
+            {
+                Invalid = 0,
+                GPSfix = 1,
+                DGPSfix = 2,
+            };
+
             bool valid = false;
 
-            Timer timer;
-            uint16_t latitude;
-            uint16_t longitude;
+            struct Latitude
+            {
+                bool valid =false;
+                Timer timer = Timer();
+                eLatitude type = No_Latitude;
+                uint8_t degree = 0;
+                uint8_t min = 0;
+                uint16_t sec = 0;
+            };
+
+            struct Longitude
+            {
+                bool valid = false;
+                Timer timer = Timer();
+                eLongitude type = No_Longitude;
+                uint8_t degree = 0;
+                uint8_t min = 0;
+                uint16_t sec = 0;
+            };
+
+            struct Altitude
+            {
+                bool valid = false;
+                Timer timer = Timer();
+                float altitudeM = 0;
+            };
+
+            int geoDiffStationID;
+            int geoDiffLastUpTime;
+            uint8_t satellitesInUse;
+            eGPSfixType fixType;
+            float HDOPfactor;
+            Latitude latitude;
+            Longitude longitude;
+            Altitude altitude;
+//            Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+//            mean sea level.  -=geoid is below WGS-84 ellipsoid)
+            float geoSeparation;
+        };
+
+        struct Compass
+        {
+            enum eDeviation
+            {
+                No_Deviation = 0,
+                East_Deviation = 1,
+                West_Deviation = 2,
+
+            };
+
+            enum eVariation
+            {
+                No_Variation = 0,
+                East_Variation = 1,
+                West_Variation = 2,
+            };
+
+            bool valid = false;
+            Timer timer = Timer();
+            float heading = 0.0;
+            float deviation = 0.0;
+            eDeviation devType = No_Deviation;
+            float variation = 0.0;
+            eVariation varType = No_Variation;
+        };
+
+        struct Barometer
+        {
+            bool valid = false;
+            Timer timer = Timer();
+            float inchesPressure = 0;
+            float barPressure = 0;
+        };
+
+        struct Temperature
+        {
+            bool valid = false;
+            Timer timer = Timer();
+            float TempCelsium = 0;
+        };
+
+        struct Humidity
+        {
+            bool valid = false;
+            Timer timer = Timer();
+            float relHumidity = 0;
+            float absHumidity = 0;
+            float dewPoint = 0;
+        };
+
+        struct NorthTrackSpeed
+        {
+            bool valid = false;
+            Timer timer = Timer();
+            float trackDegreesTrue;
+            float trackDegreesMagnetic;
+            float speedInMetersPerSecond = 0;
+            float speedInKnots = 0;
+        };
+
+        class Wind
+        {
+        public:
+            struct WindData
+            {
+                float windDirectionDegreesTrue = 0;
+                float windDirectionDegreesMagnetic = 0;
+                float windSpeedKnots = 0;
+                float windSpeedMeters = 0;
+            };
+
+
+        public:
+            float windDirectionDegreesTrue = 0;
+            float windDirectionDegreesMagnetic = 0;
+            float windSpeedKnots = 0;
+            float windSpeedMeters = 0;
+        public:
+            void resetTimer()
+            {
+                _timer.reset();
+            }
+
+            void setValidState(bool state)
+            {
+                _valid = state;
+            }
+
+            int64_t elapsedMSecAfterUpdate()
+            {
+                return _timer.elapsed();
+            }
+        private:
+            bool _valid = false;
+            Timer _timer = Timer();
+        public:
+            Wind(){}
+            ~Wind(){}
         };
 
         class Date
@@ -129,6 +272,9 @@ namespace Airmar200WXH
                 return _timer.elapsed();
             }
 
+        public:
+            float localTimeZoneHours;
+            float localTimeZoneMinutes;
         private:
             Timer _timer;
             bool _valid = false;
@@ -137,24 +283,70 @@ namespace Airmar200WXH
             uint8_t _sec;
         };
 
-	public:
+    public:
         explicit Airmar200WXHController(const SerialPortSettings& serialPortSettings, const uint8_t TRIES_BEFORE_FAIL);
         virtual ~Airmar200WXHController();
 	public:
 		RetCode open();
 		void close();
 		RetCode checkConnetion();
-	public:
-        RetCode readLocation(Location& loc);
     public:
         RetCode readDataLoop();
+    private:
+        //GPGGA group
+        void _updateTime(const QByteArray& timeStr);
+        void _updateGPSfixType(const QByteArray& fixTypeStr);
+        void _updateSatellitesInUse(const QByteArray& satellitesInUseStr);
+        void _updateLatitude(const QByteArray& latitudeStr, const QByteArray& latitudeTypeStr);
+        void _updateLongitude(const QByteArray& longitudeStr, const QByteArray& longitudeTypeStr);
+        void _updateAltitude(const QByteArray& altitudeStr);
+        void _updateLocationStatus();
+        void _updateHDOPfactor(const QByteArray& HDOPfactorStr);
+        void _updateGeoSeparation(const QByteArray& geoSeparationStr);
+        void _updateGeoDiffLastUpTime(const QByteArray& geoDiffLastUpTimeStr);
+        void _updateGeoDiffStationId(const QByteArray& geoDiffStationIdStr);
+        //GPZDA group
+        void _updateDate(const QByteArray& dayStr, const QByteArray& monthStr, const QByteArray& yearStr);
+        void _updateLocalTimeDescription(const QByteArray& localZoneDescrHoursStr,
+                                         const QByteArray& localZoneDescrMinStr);
+
+        //HCHDG group
+        void _updateCompass(const QByteArray& headingStr,
+                            const QByteArray& deviationStr,
+                            const QByteArray& deviationDirectionStr,
+                            const QByteArray& variationStr,
+                            const QByteArray& variationDirectionStr);
+        //WIMDA group
+        void _updateBarometer(const QByteArray& inchesPressureStr,
+                              const QByteArray& barPressureStr);
+        void _updateAirTempCelsium(const QByteArray& airTempCelsiumStr);
+        void _updateWaterTempCelsium(const QByteArray& waterTempCelsiumStr);
+        void _updateHumidity(const QByteArray& relHumidityStr,
+                             const QByteArray& absHumidityStr,
+                             const QByteArray& dewPointStr);
+        void _updateWind(const QByteArray& windDirectionDegreesTrueStr,
+                         const QByteArray& windDirectionDegreesMagneticStr,
+                         const QByteArray& windSpeedKnotsStr,
+                         const QByteArray& windSpeedMetersStr);
+        //GPVTG group
+        _updateNorthTrackSpeed(const QByteArray);
+    private:
+        void _checkIsDataOutdated();
     private:
         Airmar200WXHController() = delete;
 	private:
 		IODev _ioDev;
     private:
         Time _time;
+        Date _date;
         Location _location;
+        Compass _compass;
+        Barometer _barometer;
+        Temperature _airTemperature;
+        Temperature _waterTemperature;
+        Humidity _humidity;
+        Wind _wind;
+        NorthTrackSpeed _trackSpeed;
 	private:
 		const uint8_t TRIES_BEFORE_FAIL;
     };

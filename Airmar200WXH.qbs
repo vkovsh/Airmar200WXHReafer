@@ -3,7 +3,7 @@ import qbs
 //Library {
 //    type: project.libraryType
 CppApplication {
-    Depends { name: "BuildConfig" }
+//    Depends { name: "BuildConfig" }
     Depends { name: "Qt.core" }
 
 //    Group {

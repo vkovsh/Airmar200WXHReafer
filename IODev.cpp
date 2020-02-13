@@ -2,7 +2,7 @@
 
 #include "IODev.h"
 
-//#include <QDebug>
+#include <QDebug>
 
 using namespace Airmar200WXH;
 
@@ -35,7 +35,7 @@ RetCode IODev::recieve(QByteArray& buf, size_t timeout)
     const int MAX_SIZE = sizeof(buffer) - 1;
     int byteRecieved = 0;
     int leftTimeoutsCount = _dev.settings().rxTimeoutMaxCount;
-    while (byteRecieved < BUFF_SIZE)
+    while (byteRecieved < BUFF_SIZE && leftTimeoutsCount != 0)
     {
         if(leftTimeoutsCount == 0)
         {
