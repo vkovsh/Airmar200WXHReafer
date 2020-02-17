@@ -264,13 +264,13 @@ RetCode Airmar200WXHController::readDataLoop()
         return ret;
     }
 
-    qDebug() << _airTemperature.valid;
-    qDebug() << _airTemperature.TempCelsium << "Celsium";
+//    qDebug() << _airTemperature.valid;
+//    qDebug() << _airTemperature.TempCelsium << "Celsium";
     RetCode ret = RetCode::RC_ERR;
     QByteArray rxBuf;
     constexpr size_t DELAY_MSEC = 300;
     ret = _ioDev.recieve(rxBuf, DELAY_MSEC);
-    qDebug() << rxBuf.size();
+//    qDebug() << rxBuf.size();
     if (ret == RetCode::RC_SUCCESS)
     {
         QList<QByteArray> splittedRxBuf = rxBuf.split('\n');
@@ -305,7 +305,10 @@ RetCode Airmar200WXHController::readDataLoop()
             {
                 _updateTime(splittedCmdStr[1]);
                 _updateDate(splittedCmdStr[2], splittedCmdStr[3], splittedCmdStr[4]);
-                _updateLocalTimeDescription(splittedCmdStr[5], splittedCmdStr[6]);
+                if (splittedCmdStr.size() >= 7)
+                {
+                    _updateLocalTimeDescription(splittedCmdStr[5], splittedCmdStr[6]);
+                }
             }
             //done
             else if (splittedCmdStr.at(0) == "$HCHDG")
@@ -323,7 +326,7 @@ RetCode Airmar200WXHController::readDataLoop()
                 _updateAirTempCelsium(splittedCmdStr[5]);
                 _updateWaterTempCelsium(splittedCmdStr[7]);
                 _updateHumidity(splittedCmdStr[9], splittedCmdStr[10], splittedCmdStr[11]);
-                _updateWind(splittedCmdStr[13], splittedCmdStr[15], splittedCmdStr[17], splittedCmdStr[19]);//
+                _updateWind(splittedCmdStr[13], splittedCmdStr[15], splittedCmdStr[17], splittedCmdStr[19]);
             }
             else if (splittedCmdStr.at(0) == "$GPVTG")
             {
@@ -341,10 +344,56 @@ RetCode Airmar200WXHController::readDataLoop()
             {
 
             }
+            else if (splittedCmdStr.at(0) == "$WIMWV")
+            {
+                if (splittedCmdStr.size() >= 6 &&
+                        splittedCmdStr[5] == "A") //data valid
+                {
+                    _updateWindWithUnit(splittedCmdStr[1],
+                            splittedCmdStr[3],
+                            splittedCmdStr[5]);
+                }
+            }
+            else
+            {
+                qDebug() << splittedCmdStr.at(0);
+            }
         }
     }
     _checkIsDataOutdated();
     return ret;
+}
+
+void Airmar200WXHController::_updateWindWithUnit(const QByteArray& angle,
+                         const QByteArray& speed,
+                         const QByteArray& speedParam)
+{
+    _wind.windAngleWithCenterline = angle.toFloat();
+    if (speedParam == "K")
+    {
+        _wind.windSpeedWithUnit = speed.toFloat() * 1000 / 3600;
+    }
+    else if (speedParam == "M")
+    {
+        _wind.windSpeedWithUnit = speed.toFloat();
+    }
+}
+
+void Airmar200WXHController::_updateNorthTrackSpeed(const QByteArray& trackDegreesTrueStr,
+                       const QByteArray& trackDegreesMagneticStr,
+                       const QByteArray& speedInKnotsStr,
+                       const QByteArray& speedInKMetersPerHourStr)
+{
+    if (trackDegreesTrueStr.isEmpty() == false &&
+            trackDegreesMagneticStr.isEmpty() == false &&
+            speedInKnotsStr.isEmpty() == false &&
+            speedInKMetersPerHourStr.isEmpty() == false)
+    {
+        _trackSpeed.trackDegreesTrue = trackDegreesTrueStr.toFloat();
+        _trackSpeed.trackDegreesMagnetic = trackDegreesMagneticStr.toFloat();
+        _trackSpeed.speedInKnots = speedInKnotsStr.toFloat();
+        _trackSpeed.speedInMetersPerSecond = speedInKMetersPerHourStr.toFloat() * 1000.0 / 3600.0;
+    }
 }
 
 void Airmar200WXHController::_updateLocalTimeDescription(const QByteArray& localZoneDescrHoursStr,
@@ -408,5 +457,9 @@ void Airmar200WXHController::_checkIsDataOutdated()
     if (_wind.elapsedMSecAfterUpdate() >= 1000)
     {
         _wind.setValidState(false);
+    }
+    if (_trackSpeed.timer.elapsed() >= 3000)
+    {
+        _trackSpeed.valid = false;
     }
 }

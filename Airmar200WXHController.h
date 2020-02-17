@@ -153,8 +153,8 @@ namespace Airmar200WXH
         {
             bool valid = false;
             Timer timer = Timer();
-            float trackDegreesTrue;
-            float trackDegreesMagnetic;
+            float trackDegreesTrue = 0;
+            float trackDegreesMagnetic = 0;
             float speedInMetersPerSecond = 0;
             float speedInKnots = 0;
         };
@@ -162,16 +162,11 @@ namespace Airmar200WXH
         class Wind
         {
         public:
-            struct WindData
-            {
-                float windDirectionDegreesTrue = 0;
-                float windDirectionDegreesMagnetic = 0;
-                float windSpeedKnots = 0;
-                float windSpeedMeters = 0;
-            };
+            //To centerline
+            float windAngleWithCenterline = 0;
+            float windSpeedWithUnit = 0;
 
-
-        public:
+            //To north
             float windDirectionDegreesTrue = 0;
             float windDirectionDegreesMagnetic = 0;
             float windSpeedKnots = 0;
@@ -329,7 +324,14 @@ namespace Airmar200WXH
                          const QByteArray& windSpeedKnotsStr,
                          const QByteArray& windSpeedMetersStr);
         //GPVTG group
-        _updateNorthTrackSpeed(const QByteArray);
+        void _updateNorthTrackSpeed(const QByteArray& trackDegreesTrueStr,
+                               const QByteArray& trackDegreesMagneticStr,
+                               const QByteArray& speedInKnotsStr,
+                               const QByteArray& speedInKMetersPerHourStr);
+        //WIMWV group
+        void _updateWindWithUnit(const QByteArray& angle,
+                                 const QByteArray& speed,
+                                 const QByteArray& speedParam);
     private:
         void _checkIsDataOutdated();
     private:
