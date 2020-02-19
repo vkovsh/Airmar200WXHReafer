@@ -10,6 +10,9 @@ IODev::IODev(const SerialPortSettings& serialPortSettings)
     : _dev(serialPortSettings)
 {}
 
+IODev::IODev(const SocketClientSettings& socketClientSettings)
+{}
+
 IODev::~IODev()
 {}
 

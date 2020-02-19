@@ -5,6 +5,7 @@
 //#include <Qsl/Crc/Crc.h>
 
 #include "SerialPort.h"
+#include "Socket.h"
 #include "RetCode.h"
 
 namespace Airmar200WXH
@@ -13,6 +14,7 @@ namespace Airmar200WXH
     {
     public:
         IODev(const SerialPortSettings& serialPortSettings);
+        IODev(const SocketClientSettings& serialPortSettings);
         ~IODev();
     public:
         RetCode open();

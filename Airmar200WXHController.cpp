@@ -9,6 +9,11 @@ Airmar200WXHController::Airmar200WXHController(const SerialPortSettings& serialP
                                                 _ioDev(serialPortSettings),
                                                 TRIES_BEFORE_FAIL(TRIES_BEFORE_FAIL){}
 
+Airmar200WXHController::Airmar200WXHController(const SocketClientSettings& socketClientSettings,
+                                               const uint8_t TRIES_BEFORE_FAIL):
+                                                _ioDev(socketClientSettings),
+                                                TRIES_BEFORE_FAIL(TRIES_BEFORE_FAIL){}
+
 Airmar200WXHController::~Airmar200WXHController()
 {}
 

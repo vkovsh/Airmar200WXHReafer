@@ -280,6 +280,7 @@ namespace Airmar200WXH
 
     public:
         explicit Airmar200WXHController(const SerialPortSettings& serialPortSettings, const uint8_t TRIES_BEFORE_FAIL);
+        explicit Airmar200WXHController(const SocketClientSettings& socketClientSettings, const uint8_t TRIES_BEFORE_FAIL);
         virtual ~Airmar200WXHController();
 	public:
 		RetCode open();
